@@ -2,7 +2,9 @@ var express = require('express');
 
 var fbuffer = fs.readFileSync("index.html");
 
-var str_buffer = fbuffer.toString('utf8',0, fbuffer);
+var str_buffer = fbuffer.toString('utf8',0, fbuffer.length);
+
+
 
 var app = express.createServer(express.logger());
 
