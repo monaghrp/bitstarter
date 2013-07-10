@@ -31,23 +31,29 @@ var CHECKSFILE_DEFAULT = "checks.json";
 var URL_DEFAULT = "https://www.google.com";
 
 var assertFileExists = function(infile) {
+    //console.log(program.file)
     var instr = infile.toString();
     if(!fs.existsSync(instr)) {
 	console.log("%s does not exist. Exiting.", instr);
 	process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
     }
+    
     return instr;
 };
 
 var assertURLExists = function(inURL){
-    rest.get(inURL).on('complete', function(result) {
+    //console.log(program.url)
+    var instr = inURL.toString();
+    rest.get(instr).on('complete', function(result) {
 	if (result instanceof Error) {
 	    sys.puts('Error: ' + result.message);
 	    console.log("%s does not exists. Exiting", inURL);
 	    process.exit(1);
 	    //this.retry(5000); // try again after 5 sec
 
-  }
+	} 
+	//return sys.puts(result);
+	return instr;
 });
 
 };
@@ -63,6 +69,8 @@ var loadChecks = function(checksfile) {
 
 
 var checkHtmlFile = function(htmlfile, checksfile) {
+    //console.log(program.option.toString());
+    console.log(htmlfile);
     $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
     var out = {};
@@ -82,9 +90,11 @@ var clone = function(fn) {
 if(require.main == module) {
     program
 	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+        .option('-u, --url <URL>', 'Web address', clone(assertURLExists), URL_DEFAULT)    
 	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-	.option('-u, --url <URL>', 'Web address',clone(assertURLExists), URL_DEFAULT)
 	.parse(process.argv);
+
+    
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
