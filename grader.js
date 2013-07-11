@@ -37,23 +37,32 @@ var assertFileExists = function(infile) {
 	console.log("%s does not exist. Exiting.", instr);
 	process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
     }
-    
+
     return instr;
 };
 
-var assertURLExists = function(inURL){
-    //console.log(program.url)
+var checkURL = function(inURL,checksfile){
+    console.log('checking URL');
     var instr = inURL.toString();
-    rest.get(instr).on('complete', function(result) {
+	rest.get(instr).on('complete', function(result) {
 	if (result instanceof Error) {
 	    sys.puts('Error: ' + result.message);
-	    console.log("%s does not exists. Exiting", inURL);
+	    console.log("%s does not exists. Exiting", instr);
 	    process.exit(1);
 	    //this.retry(5000); // try again after 5 sec
 
-	} 
-	//return sys.puts(result);
-	return instr;
+	} else {
+	    $= cheerio.load(result);
+    	    var checks= loadChecks('checks.json').sort();
+	    var out = {};
+	    for(var ii in checks) {
+		var present = $(checks[ii]).length >0;
+		out[checks[ii]]=present;
+	    }
+	var outJson = JSON.stringify(out, null, 4);
+	console.log(outJson);
+	return outJson;
+    }
 });
 
 };
@@ -69,8 +78,7 @@ var loadChecks = function(checksfile) {
 
 
 var checkHtmlFile = function(htmlfile, checksfile) {
-    //console.log(program.option.toString());
-    console.log(htmlfile);
+    console.log('checking file');
     $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
     var out = {};
@@ -78,7 +86,9 @@ var checkHtmlFile = function(htmlfile, checksfile) {
 	var present = $(checks[ii]).length > 0;
 	out[checks[ii]] = present;
     }
-    return out;
+    var outJson =JSON.stringify(out, null, 4);
+    console.log(outJson);
+    return outJson;
 };
 
 var clone = function(fn) {
@@ -90,14 +100,15 @@ var clone = function(fn) {
 if(require.main == module) {
     program
 	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-u, --url <URL>', 'Web address', clone(assertURLExists), URL_DEFAULT)    
+	.option('-u, --url <inURL>', 'Web address',URL_DEFAULT)
 	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
 	.parse(process.argv);
 
+
     
     var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    var checkJson = checkURL(program.url, program.checks);
+
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
